@@ -36,6 +36,24 @@ function Swipe(container, options) {
   var speed = options.speed || 300;
   options.continuous = options.continuous !== undefined ? options.continuous : true;
 
+  function slideWillPassThroughFrame( slide, from, to ) {
+    if (from < to) {
+      return slide >= from && slide < to + slidesPerPage;
+    } else {
+      return slide < from + slidesPerPage && slide >= to;
+    }
+  }
+
+  function getPositionOfSlideWhenAtIndex( slide, index ) {
+    if ( slide < index ) {
+      return -slideWidth;
+    } else if ( slide < index + slidesPerPage ) {
+      var positionInFrame = slide - index;
+      return positionInFrame * slideWidth;
+    }
+    return width;
+  }
+  
   function setup() {
 
     // cache slides
@@ -62,14 +80,7 @@ function Swipe(container, options) {
 
       if (browser.transitions) {
         slide.style.left = (pos * -slideWidth) + 'px';
-        if ( pos < index ) {
-          move( pos, -slideWidth, 0 );
-        } else if ( pos < index + slidesPerPage ) {
-          var positionInFrame = pos - index;
-          move( pos, positionInFrame * slideWidth, 0 );
-        } else {
-          move( pos, width, 0 );
-        }
+        move( pos, getPositionOfSlideWhenAtIndex( pos, index ), 0 );
       }
 
     }
@@ -99,19 +110,21 @@ function Swipe(container, options) {
     // do nothing if already on requested slide
     if (index == to) return;
     
-    if (browser.transitions) {
+    var pos = slides.length;
+    while(pos--) {
 
-      var diff = Math.abs(index-to) - 1;
-      var direction = Math.abs(index-to) / (index-to); // 1:right -1:left
+      var currentSlide = slides[pos];
 
-      while (diff--) move((to > index ? to : index) - diff - 1, width * direction, 0);
+      if (browser.transitions) {
+        currentSlide.style.left = (pos * -slideWidth) + 'px';
 
-      move(index, width * direction, slideSpeed || speed);
-      move(to, 0, slideSpeed || speed);
-
-    } else {
-
-      animate(index * -width, to * -width, slideSpeed || speed);
+        if( slideWillPassThroughFrame( pos, index, to ) ) {
+          var oldPosition = getPositionOfSlideWhenAtIndex( pos, index );
+          var newPosition = getPositionOfSlideWhenAtIndex( pos, to );
+          move( pos, oldPosition, 0 );
+          move( pos, newPosition, slideSpeed || speed );
+        }
+      }
 
     }
 
