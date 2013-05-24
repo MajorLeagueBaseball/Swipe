@@ -1,3 +1,5 @@
+/*jshint lastsemic: true, expr: true */
+/*global DocumentTouch: true */
 /*
  * Swipe 2.0
  *
@@ -147,11 +149,11 @@ function Swipe(container, options) {
 
     }
     
-    var start = +new Date;
+    var start = +new Date();
     
     var timer = setInterval(function() {
 
-      var timeElap = +new Date - start;
+      var timeElap = +new Date() - start;
       
       if (timeElap > speed) {
 
@@ -227,7 +229,7 @@ function Swipe(container, options) {
         y: touches.pageY,
 
         // store time to determine touch duration
-        time: +new Date
+        time: +new Date()
 
       };
       
@@ -245,7 +247,7 @@ function Swipe(container, options) {
     move: function(event) {
 
       // ensure swiping with one touch and not pinching
-      if ( event.touches.length > 1 || event.scale && event.scale !== 1) return
+      if ( event.touches.length > 1 || event.scale && event.scale !== 1) return;
 
       if (options.disableScroll) event.preventDefault();
 
@@ -255,7 +257,7 @@ function Swipe(container, options) {
       delta = {
         x: touches.pageX - start.x,
         y: touches.pageY - start.y
-      }
+      };
 
       // determine if scrolling test has run - one time test
       if ( typeof isScrolling == 'undefined') {
@@ -274,9 +276,9 @@ function Swipe(container, options) {
         // increase resistance if first or last slide
         delta.x = 
           delta.x / 
-            ( (!index && delta.x > 0               // if first slide and sliding left
-              || index == slides.length - 1        // or if last slide and sliding right
-              && delta.x < 0                       // and if sliding at all
+            ( (!index && delta.x > 0 ||            // if first slide and sliding left
+                index == slides.length - 1 &&     // or if last slide and sliding right
+                delta.x < 0                       // and if sliding at all
             ) ?                      
             ( Math.abs(delta.x) / width + 1 )      // determine resistance level
             : 1 );                                 // no resistance if false
@@ -292,18 +294,18 @@ function Swipe(container, options) {
     end: function(event) {
 
       // measure duration
-      var duration = +new Date - start.time;
+      var duration = +new Date() - start.time;
 
       // determine if slide attempt triggers next/prev slide
       var isValidSlide = 
-            Number(duration) < 250               // if slide duration is less than 250ms
-            && Math.abs(delta.x) > 20            // and if slide amt is greater than 20px
-            || Math.abs(delta.x) > width/2;      // or if slide amt is greater than half the width
+            Number(duration) < 250 &&            // if slide duration is less than 250ms
+            Math.abs(delta.x) > 20 ||         // and if slide amt is greater than 20px
+            Math.abs(delta.x) > width/2;      // or if slide amt is greater than half the width
 
       // determine if slide attempt is past start and end
       var isPastBounds = 
-            !index && delta.x > 0                            // if first slide and slide amt is greater than 0
-            || index == slides.length - 1 && delta.x < 0;    // or if last slide and slide amt is less than 0
+            !index && delta.x > 0 ||                         // if first slide and slide amt is greater than 0
+            index == slides.length - 1 && delta.x < 0;    // or if last slide and slide amt is less than 0
       
       // determine direction of swipe (true:right, false:left)
       var direction = delta.x < 0;
@@ -342,8 +344,8 @@ function Swipe(container, options) {
       }
 
       // kill touchmove and touchend event listeners until touchstart called again
-      element.removeEventListener('touchmove', events, false)
-      element.removeEventListener('touchend', events, false)
+      element.removeEventListener('touchmove', events, false);
+      element.removeEventListener('touchend', events, false);
 
     },
     transitionEnd: function(event) {
@@ -358,7 +360,7 @@ function Swipe(container, options) {
 
     }
 
-  }
+  };
 
   // trigger setup
   setup();
@@ -473,7 +475,7 @@ function Swipe(container, options) {
       }
 
     }
-  }
+  };
 
 }
 
@@ -484,6 +486,6 @@ if ( window.jQuery || window.Zepto ) {
       return this.each(function() {
         $(this).data('Swipe', new Swipe($(this)[0], params));
       });
-    }
-  })( window.jQuery || window.Zepto )
+    };
+  })( window.jQuery || window.Zepto );
 }
