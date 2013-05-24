@@ -30,7 +30,7 @@ function Swipe(container, options) {
   // quit if no root element
   if (!container) return;
   var element = container.children[0];
-  var slides, slidePos, width;
+  var slides, slidePos, width, slidesPerPage, slideWidth;
   options = options || {};
   var index = parseInt(options.startSlide, 10) || 0;
   var speed = options.speed || 300;
@@ -46,8 +46,10 @@ function Swipe(container, options) {
 
     // determine width of each slide
     width = container.getBoundingClientRect().width || container.offsetWidth;
+    slideWidth = slides[0].getBoundingClientRect().width || slides[0].offsetWidth;
+    slidesPerPage = Math.ceil( width / slideWidth );
 
-    element.style.width = (slides.length * width) + 'px';
+    element.style.width = (slides.length * slideWidth) + 'px';
 
     // stack elements
     var pos = slides.length;
@@ -55,17 +57,24 @@ function Swipe(container, options) {
 
       var slide = slides[pos];
 
-      slide.style.width = width + 'px';
+      slide.style.width = slideWidth + 'px';
       slide.setAttribute('data-index', pos);
 
       if (browser.transitions) {
-        slide.style.left = (pos * -width) + 'px';
-        move(pos, index > pos ? -width : (index < pos ? width : 0), 0);
+        slide.style.left = (pos * -slideWidth) + 'px';
+        if ( pos < index ) {
+          move( pos, -slideWidth, 0 );
+        } else if ( pos < index + slidesPerPage ) {
+          var positionInFrame = pos - index;
+          move( pos, positionInFrame * slideWidth, 0 );
+        } else {
+          move( pos, width, 0 );
+        }
       }
 
     }
 
-    if (!browser.transitions) element.style.left = (index * -width) + 'px';
+    if (!browser.transitions) element.style.left = (index * -slideWidth) + 'px';
 
     container.style.visibility = 'visible';
 
