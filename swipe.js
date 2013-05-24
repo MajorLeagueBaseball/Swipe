@@ -45,13 +45,7 @@ function Swipe(container, options) {
   }
 
   function getPositionOfSlideWhenAtIndex( slide, index ) {
-    if ( slide < index ) {
-      return -slideWidth;
-    } else if ( slide < index + slidesPerPage ) {
-      var positionInFrame = slide - index;
-      return positionInFrame * slideWidth;
-    }
-    return width;
+    return (slide - index) * slideWidth;
   }
   
   function setup() {
@@ -109,24 +103,36 @@ function Swipe(container, options) {
 
     // do nothing if already on requested slide
     if (index == to) return;
+    var startingIndex = index;
     
     if (browser.transitions) {
-      var pos = slides.length;      
-     
+      var pos = slides.length;
+
       while(pos--) {
         var currentSlide = slides[pos];
 
-        currentSlide.style.left = (pos * -slideWidth) + 'px';
-
-        if( slideWillPassThroughFrame( pos, index, to ) ) {
-          var oldPosition = getPositionOfSlideWhenAtIndex( pos, index );
-          var newPosition = getPositionOfSlideWhenAtIndex( pos, to );
+        if( slideWillPassThroughFrame( pos, startingIndex, to ) ) {
+          var oldPosition = getPositionOfSlideWhenAtIndex( pos, startingIndex );
           move( pos, oldPosition, 0 );
-          move( pos, newPosition, slideSpeed || speed );
         }
       }
+      // animations must be started in a timeout to ensure that
+      // they start from the starting point determined above.
+      setTimeout(function() {
+        pos = slides.length;      
+       
+        while(pos--) {
+          var currentSlide = slides[pos];
+
+          if( slideWillPassThroughFrame( pos, startingIndex, to ) ) {
+            var newPosition = getPositionOfSlideWhenAtIndex( pos, to );
+            move( pos, newPosition, slideSpeed || speed );
+          }
+        }
+      }, 4);
+      
     } else {
-      animate(index * -slideWidth, to * -slideWidth, slideSpeed || speed);
+      animate(startingIndex * -slideWidth, to * -slideWidth, slideSpeed || speed);
     }
 
     index = to;
