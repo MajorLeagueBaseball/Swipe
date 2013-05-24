@@ -110,12 +110,12 @@ function Swipe(container, options) {
     // do nothing if already on requested slide
     if (index == to) return;
     
-    var pos = slides.length;
-    while(pos--) {
+    if (browser.transitions) {
+      var pos = slides.length;      
+     
+      while(pos--) {
+        var currentSlide = slides[pos];
 
-      var currentSlide = slides[pos];
-
-      if (browser.transitions) {
         currentSlide.style.left = (pos * -slideWidth) + 'px';
 
         if( slideWillPassThroughFrame( pos, index, to ) ) {
@@ -125,7 +125,8 @@ function Swipe(container, options) {
           move( pos, newPosition, slideSpeed || speed );
         }
       }
-
+    } else {
+      animate(index * -slideWidth, to * -slideWidth, slideSpeed || speed);
     }
 
     index = to;
