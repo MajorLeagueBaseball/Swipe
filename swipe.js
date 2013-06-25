@@ -38,9 +38,9 @@ function Swipe(container, options) {
 
   function slideWillPassThroughFrame( slide, from, to ) {
     if (from < to) {
-      return slide >= from && slide < to + slidesPerPage;
+      return slide >= from && slide <= to + slidesPerPage;
     } else {
-      return slide < from + slidesPerPage && slide >= to;
+      return slide <= from + slidesPerPage && slide >= to;
     }
   }
 
@@ -102,7 +102,7 @@ function Swipe(container, options) {
   function slide(to, slideSpeed) {
 
     // do nothing if already on requested slide
-    if (index == to) return;
+    //if (index == to) return;
     var startingIndex = index;
     
     if (browser.transitions) {
@@ -111,7 +111,7 @@ function Swipe(container, options) {
       while(pos--) {
         var currentSlide = slides[pos];
 
-        if( slideWillPassThroughFrame( pos, startingIndex, to ) ) {
+        if( index !== to && slideWillPassThroughFrame( pos, startingIndex, to ) ) {
           var oldPosition = getPositionOfSlideWhenAtIndex( pos, startingIndex );
           move( pos, oldPosition, 0 );
         }
@@ -130,7 +130,7 @@ function Swipe(container, options) {
           }
         }
       }, 4);
-      
+
     } else {
       animate(startingIndex * -slideWidth, to * -slideWidth, slideSpeed || speed);
     }
@@ -313,9 +313,9 @@ function Swipe(container, options) {
             : 1 );                                 // no resistance if false
         
         // translate 1:1
-        translate(index-1, delta.x + slidePos[index-1], 0);
-        translate(index, delta.x + slidePos[index], 0);
-        translate(index+1, delta.x + slidePos[index+1], 0);
+        for( var i = Math.max(index - slidesPerPage - 1, 0); i < index + slidesPerPage; i++ ) {
+          translate(index+i, delta.x + slidePos[index+i], 0);
+        }
 
       }
 
@@ -345,18 +345,10 @@ function Swipe(container, options) {
         if (isValidSlide && !isPastBounds) {
 
           if (direction) {
-
-            move(index-1, -width, 0);
-            move(index, slidePos[index]-width, speed);
-            move(index+1, slidePos[index+1]-width, speed);
-            index += 1;
+            slide(index+1);
 
           } else {
-
-            move(index+1, width, 0);
-            move(index, slidePos[index]+width, speed);
-            move(index-1, slidePos[index-1]+width, speed);
-            index += -1;
+            slide(index-1);
 
           }
 
@@ -364,9 +356,7 @@ function Swipe(container, options) {
 
         } else {
 
-          move(index-1, -width, speed);
-          move(index, 0, speed);
-          move(index+1, width, speed);
+          slide(index);
 
         }
 
