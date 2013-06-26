@@ -216,6 +216,10 @@ function Swipe(container, options) {
 
   }
 
+  function calculateResistance( overshoot ) {
+    return overshoot / 2;
+  }
+
 
   // setup initial vars
   var start = {};
@@ -297,23 +301,32 @@ function Swipe(container, options) {
 
         // stop slideshow
         stop();
-
-        // increase resistance if first or last slide
-        delta.x = 
-          delta.x / 
-            ( (!index && delta.x > 0 ||           // if first slide and sliding left
-                index == slides.length - 1 &&     // or if last slide and sliding right
-                delta.x < 0                       // and if sliding at all
-            ) ?                      
-            ( Math.abs(delta.x) / width + 1 )      // determine resistance level
-            : 1 );                                 // no resistance if false
         
+        var overshoot = 0;
+        var leftBoundary = -slideWidth;
+        var rightBoundary = width;
+        var locationOfFirstSlide = delta.x + slidePos[index] + ((-index) * slideWidth);
+        var locationOfLastSlide = delta.x + slidePos[index] + ((slides.length-1-index) * slideWidth);
+        
+        if (locationOfFirstSlide > 0) { // first slide, going left
+          rightBoundary += width; // this ensures that slides don't overlap when springing back.
+          overshoot = Math.abs(locationOfFirstSlide);
+          delta.x -= overshoot;
+          delta.x += calculateResistance( overshoot );
+
+        } else if (locationOfLastSlide < (width - slideWidth)) { // last slide, going right
+          leftBoundary -= width; // this ensures that slides don't overlap when springing back.
+          overshoot = slideWidth - locationOfLastSlide;
+          delta.x += overshoot;
+          delta.x -= calculateResistance( overshoot );
+        }
+
         // translate 1:1
         for( var i = 0; i < slides.length; i++ ) {
           var location = delta.x + slidePos[index] + ((i-index) * slideWidth);
-          if (location < -slideWidth) { // not visible, to the left
+          if (location < leftBoundary) { // not visible, to the left
             translate(i, -slideWidth, 0);
-          } else if (location > width) { // not visible, to the right
+          } else if (location > rightBoundary) { // not visible, to the right
             translate(i, width, 0);
           } else { // it's visible
             translate(i, location, 0);
