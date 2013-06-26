@@ -109,8 +109,6 @@ function Swipe(container, options) {
       var pos = slides.length;
 
       while(pos--) {
-        var currentSlide = slides[pos];
-
         if( index !== to && slideWillPassThroughFrame( pos, startingIndex, to ) ) {
           var oldPosition = getPositionOfSlideWhenAtIndex( pos, startingIndex );
           move( pos, oldPosition, 0 );
@@ -118,18 +116,16 @@ function Swipe(container, options) {
       }
       // animations must be started in a timeout to ensure that
       // they start from the starting point determined above.
-      setTimeout(function() {
+      offloadFn(function() {
         pos = slides.length;      
        
         while(pos--) {
-          var currentSlide = slides[pos];
-
           if( slideWillPassThroughFrame( pos, startingIndex, to ) ) {
             var newPosition = getPositionOfSlideWhenAtIndex( pos, to );
             move( pos, newPosition, slideSpeed || speed );
           }
         }
-      }, 4);
+      });
 
     } else {
       animate(startingIndex * -slideWidth, to * -slideWidth, slideSpeed || speed);
@@ -305,7 +301,7 @@ function Swipe(container, options) {
         // increase resistance if first or last slide
         delta.x = 
           delta.x / 
-            ( (!index && delta.x > 0 ||            // if first slide and sliding left
+            ( (!index && delta.x > 0 ||           // if first slide and sliding left
                 index == slides.length - 1 &&     // or if last slide and sliding right
                 delta.x < 0                       // and if sliding at all
             ) ?                      
