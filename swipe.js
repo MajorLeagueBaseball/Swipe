@@ -309,14 +309,21 @@ function Swipe(container, options) {
             : 1 );                                 // no resistance if false
         
         // translate 1:1
-        for( var i = Math.max(index - slidesPerPage - 1, 0); i < index + slidesPerPage; i++ ) {
-          translate(index+i, delta.x + slidePos[index+i], 0);
+        for( var i = 0; i < slides.length; i++ ) {
+          var location = delta.x + slidePos[index] + ((i-index) * slideWidth);
+          if (location < -slideWidth) { // not visible, to the left
+            translate(i, -slideWidth, 0);
+          } else if (location > width) { // not visible, to the right
+            translate(i, width, 0);
+          } else { // it's visible
+            translate(i, location, 0);
+          }
         }
 
       }
 
     },
-    end: function(event) {
+    end: function() {
 
       // measure duration
       var duration = +new Date() - start.time;
