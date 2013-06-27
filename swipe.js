@@ -201,6 +201,43 @@ function Swipe(container, options) {
 
   }
 
+  function calculateResistance( overshoot ) {
+    return overshoot / 2;
+  }
+
+  function placeAnimationFrame( x ) {
+    var overshoot = 0;
+    var leftBoundary = -slideWidth;
+    var rightBoundary = width;
+    var locationOfFirstSlide = x + slidePos[index] + ((-index) * slideWidth);
+    var locationOfLastSlide = x + slidePos[index] + ((slides.length-1-index) * slideWidth);
+    
+    if (locationOfFirstSlide > 0) { // first slide, going left
+      rightBoundary += width; // this ensures that slides don't overlap when springing back.
+      overshoot = Math.abs(locationOfFirstSlide);
+      x -= overshoot;
+      x += calculateResistance( overshoot );
+
+    } else if (locationOfLastSlide < (width - slideWidth)) { // last slide, going right
+      leftBoundary -= width; // this ensures that slides don't overlap when springing back.
+      overshoot = slideWidth - locationOfLastSlide;
+      x += overshoot;
+      x -= calculateResistance( overshoot );
+    }
+
+    // translate 1:1
+    for( var i = 0; i < slides.length; i++ ) {
+      var location = x + slidePos[index] + ((i-index) * slideWidth);
+      if (location < leftBoundary) { // not visible, to the left
+        translate(i, -slideWidth, 0);
+      } else if (location > rightBoundary) { // not visible, to the right
+        translate(i, width, 0);
+      } else { // it's visible
+        translate(i, location, 0);
+      }
+    }
+  }
+
   // setup auto slideshow
   var delay = options.auto || 0;
   var interval;
@@ -217,11 +254,6 @@ function Swipe(container, options) {
     clearTimeout(interval);
 
   }
-
-  function calculateResistance( overshoot ) {
-    return overshoot / 2;
-  }
-
 
   // setup initial vars
   var start = {};
@@ -304,36 +336,7 @@ function Swipe(container, options) {
         // stop slideshow
         stop();
         
-        var overshoot = 0;
-        var leftBoundary = -slideWidth;
-        var rightBoundary = width;
-        var locationOfFirstSlide = delta.x + slidePos[index] + ((-index) * slideWidth);
-        var locationOfLastSlide = delta.x + slidePos[index] + ((slides.length-1-index) * slideWidth);
-        
-        if (locationOfFirstSlide > 0) { // first slide, going left
-          rightBoundary += width; // this ensures that slides don't overlap when springing back.
-          overshoot = Math.abs(locationOfFirstSlide);
-          delta.x -= overshoot;
-          delta.x += calculateResistance( overshoot );
-
-        } else if (locationOfLastSlide < (width - slideWidth)) { // last slide, going right
-          leftBoundary -= width; // this ensures that slides don't overlap when springing back.
-          overshoot = slideWidth - locationOfLastSlide;
-          delta.x += overshoot;
-          delta.x -= calculateResistance( overshoot );
-        }
-
-        // translate 1:1
-        for( var i = 0; i < slides.length; i++ ) {
-          var location = delta.x + slidePos[index] + ((i-index) * slideWidth);
-          if (location < leftBoundary) { // not visible, to the left
-            translate(i, -slideWidth, 0);
-          } else if (location > rightBoundary) { // not visible, to the right
-            translate(i, width, 0);
-          } else { // it's visible
-            translate(i, location, 0);
-          }
-        }
+        placeAnimationFrame( delta.x );
 
       }
 
