@@ -99,7 +99,7 @@ function Swipe(container, options) {
 
   }
 
-  function slide(to, slideSpeed) {
+  function slide(to, slideSpeed, startWithExistingPositions) {
 
     // do nothing if already on requested slide
     //if (index == to) return;
@@ -108,10 +108,12 @@ function Swipe(container, options) {
     if (browser.transitions) {
       var pos = slides.length;
 
-      while(pos--) {
-        if( index !== to && slideWillPassThroughFrame( pos, startingIndex, to ) ) {
-          var oldPosition = getPositionOfSlideWhenAtIndex( pos, startingIndex );
-          move( pos, oldPosition, 0 );
+      if (!startWithExistingPositions) {
+        while(pos--) {
+          if( index !== to && slideWillPassThroughFrame( pos, startingIndex, to ) ) {
+            var oldPosition = getPositionOfSlideWhenAtIndex( pos, startingIndex );
+            move( pos, oldPosition, 0 );
+          }
         }
       }
       // animations must be started in a timeout to ensure that
@@ -340,33 +342,32 @@ function Swipe(container, options) {
 
       // measure duration
       var duration = +new Date() - start.time;
+      var absDelta = Math.abs(delta.x);
 
       // determine if slide attempt triggers next/prev slide
       var isValidSlide = 
-            Number(duration) < 250 &&            // if slide duration is less than 250ms
-            Math.abs(delta.x) > 20 ||         // and if slide amt is greater than 20px
-            Math.abs(delta.x) > width/2;      // or if slide amt is greater than half the width
+            Number(duration) < 250 &&  // if slide duration is less than 250ms
+            absDelta > 20 ||           // and if slide amt is greater than 20px
+            absDelta > slideWidth/2;   // or if slide amt is greater than half the width
 
       // determine if slide attempt is past start and end
       var isPastBounds = 
-            !index && delta.x > 0 ||                         // if first slide and slide amt is greater than 0
-            index == slides.length - 1 && delta.x < 0;    // or if last slide and slide amt is less than 0
+            !index && delta.x > 0 ||                     // if first slide and slide amt is greater than 0
+            index == slides.length - 1 && delta.x < 0;   // or if last slide and slide amt is less than 0
       
-      // determine direction of swipe (true:right, false:left)
-      var direction = delta.x < 0;
-
       // if not scrolling vertically
       if (!isScrolling) {
 
         if (isValidSlide && !isPastBounds) {
-
-          if (direction) {
-            slide(index+1);
-
+          var newIndex;
+          if (absDelta > slideWidth / 2) {
+            newIndex = index - Math.round(delta.x / slideWidth);
+          } else if (delta.x > 0) {
+            newIndex = index-1;
           } else {
-            slide(index-1);
-
+            newIndex = index+1;
           }
+          slide(newIndex, speed, true);
 
           options.callback && options.callback(index, slides[index]);
 
