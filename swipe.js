@@ -88,13 +88,13 @@ function Swipe(container, options) {
   function prev() {
 
     if (index) slide(index-1);
-    else if (options.continuous) slide(slides.length-1);
+    else if (options.continuous) slide(slides.length-slidesPerPage);
 
   }
 
   function next() {
 
-    if (index < slides.length - 1) slide(index+1);
+    if (index < slides.length - slidesPerPage) slide(index+1);
     else if (options.continuous) slide(0);
 
   }
