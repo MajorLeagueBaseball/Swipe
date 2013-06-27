@@ -26,6 +26,8 @@ function Swipe(container, options) {
       return false;
     })(document.createElement('swipe'))
   };
+  var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+                              window.webkitRequestAnimationFrame || window.msRequestAnimationFrame; 
 
   // quit if no root element
   if (!container) return;
@@ -229,13 +231,33 @@ function Swipe(container, options) {
     for( var i = 0; i < slides.length; i++ ) {
       var location = x + slidePos[index] + ((i-index) * slideWidth);
       if (location < leftBoundary) { // not visible, to the left
-        translate(i, -slideWidth, 0);
+        location = -slideWidth;
       } else if (location > rightBoundary) { // not visible, to the right
-        translate(i, width, 0);
-      } else { // it's visible
-        translate(i, location, 0);
+        location = width;
       }
+      translate(i, location, 0);
+      
     }
+  }
+
+  var lastAnimationTime;
+  function animateToss( velocity, x ) {
+    var now = new Date();
+    var ms = now - lastAnimationTime;
+    lastAnimationTime = now;
+
+    var distance = Math.round( ms * velocity );
+    if (distance === 0) {
+      var newIndex = index - Math.round(x / slideWidth);
+      slide(newIndex, speed, true);
+      return;
+    }
+    x += distance;
+    placeAnimationFrame( x );
+    velocity = velocity * 0.95;
+    requestAnimationFrame(function() {
+      animateToss(velocity, x);
+    });
   }
 
   // setup auto slideshow
@@ -258,7 +280,9 @@ function Swipe(container, options) {
   // setup initial vars
   var start = {};
   var delta = {};
-  var isScrolling;      
+  var isScrolling;
+  var lastVelocities; 
+  var currentVelocitiesIndex = 0; 
 
   // setup event capturing
   var events = {
@@ -300,7 +324,13 @@ function Swipe(container, options) {
       isScrolling = undefined;
 
       // reset delta and end measurements
-      delta = {};
+      delta = {
+        x: 0,
+        y: 0
+      };
+      lastVelocities = [];
+      currentVelocitiesIndex = 0;
+      lastAnimationTime = new Date();
 
       // attach touchmove and touchend listeners
       element.addEventListener('touchmove', this, false);
@@ -315,12 +345,24 @@ function Swipe(container, options) {
       if (options.disableScroll) event.preventDefault();
 
       var touches = event.touches[0];
+      var lastDelta = delta;
 
       // measure change in x and y
       delta = {
         x: touches.pageX - start.x,
         y: touches.pageY - start.y
       };
+
+      var distanceSinceLastEvent = delta.x - lastDelta.x;
+      var now = new Date();
+      var timeSinceLastEvent = now - lastAnimationTime;
+      lastAnimationTime = now;
+
+      lastVelocities[currentVelocitiesIndex] = distanceSinceLastEvent / timeSinceLastEvent;
+      currentVelocitiesIndex += 1;
+      if (currentVelocitiesIndex === 4) {
+        currentVelocitiesIndex = 0;
+      }
 
       // determine if scrolling test has run - one time test
       if ( typeof isScrolling == 'undefined') {
@@ -363,16 +405,25 @@ function Swipe(container, options) {
 
         if (isValidSlide && !isPastBounds) {
           var newIndex;
-          if (absDelta > slideWidth / 2) {
-            newIndex = index - Math.round(delta.x / slideWidth);
-          } else if (delta.x > 0) {
-            newIndex = index-1;
+          if (slidesPerPage > 1) {
+            var velocity = 0;
+            for( var i = 0; i < lastVelocities.length; i += 1) {
+              velocity += lastVelocities[i];
+            }
+            velocity = velocity / lastVelocities.length;
+            animateToss( velocity, delta.x );
           } else {
-            newIndex = index+1;
-          }
-          slide(newIndex, speed, true);
+            if (absDelta > slideWidth / 2) {
+              newIndex = index - Math.round(delta.x / slideWidth);
+            } else if (delta.x > 0) {
+              newIndex = index-1;
+            } else {
+              newIndex = index+1;
+            }
+            slide(newIndex, speed, true);
 
-          options.callback && options.callback(index, slides[index]);
+            options.callback && options.callback(index, slides[index]);
+          }
 
         } else {
 
