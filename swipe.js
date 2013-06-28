@@ -105,6 +105,10 @@ function Swipe(container, options) {
 
     // do nothing if already on requested slide
     //if (index == to) return;
+    if (!options.continuous) {
+      to = Math.max( to, 0 );
+      to = Math.min( to, slides.length - slidesPerPage );
+    }
     var startingIndex = index;
     
     if (browser.transitions) {
@@ -160,7 +164,7 @@ function Swipe(container, options) {
     style.msTransitionDuration = 
     style.OTransitionDuration = 
     style.transitionDuration = speed + 'ms';
-
+    
     style.webkitTransform = 'translate(' + dist + 'px,0)' + 'translateZ(0)';
     style.msTransform = 
     style.MozTransform = 
@@ -207,7 +211,10 @@ function Swipe(container, options) {
     return overshoot / 2;
   }
 
-  function placeAnimationFrame( x ) {
+  function placeAnimationFrame( x, speed ) {
+
+    speed = speed || 0;
+
     var overshoot = 0;
     var leftBoundary = -slideWidth;
     var rightBoundary = width;
@@ -235,29 +242,52 @@ function Swipe(container, options) {
       } else if (location > rightBoundary) { // not visible, to the right
         location = width;
       }
-      translate(i, location, 0);
+      translate(i, location, speed);
       
     }
   }
 
-  var lastAnimationTime;
+  var stopToss = false;
   function animateToss( velocity, x ) {
-    var now = new Date();
-    var ms = now - lastAnimationTime;
-    lastAnimationTime = now;
 
-    var distance = Math.round( ms * velocity );
-    if (distance === 0) {
-      var newIndex = index - Math.round(x / slideWidth);
-      slide(newIndex, speed, true);
-      return;
+    var totalDistance = 0;
+    var loopVelocity = velocity * 16;
+    while( loopVelocity|0 !== 0 ) {
+      totalDistance += loopVelocity;
+      loopVelocity = loopVelocity * 0.9;
     }
-    x += distance;
-    placeAnimationFrame( x );
-    velocity = velocity * 0.95;
-    requestAnimationFrame(function() {
-      animateToss(velocity, x);
-    });
+
+    var slideCount = Math.round(totalDistance / slideWidth);
+    totalDistance = (slideCount * slideWidth) - (x % slideWidth);
+    console.log( 'distance', totalDistance, 'slides', slideCount);
+    
+    var remainingDistance = totalDistance;
+    var lastAnimationTime = new Date();
+
+    var animator = function() {
+      if (stopToss) {
+        return;
+      }
+
+      var now = new Date();
+      var ms = now - lastAnimationTime;
+      lastAnimationTime = now;
+
+      var distance = (remainingDistance / totalDistance) * velocity * ms;
+      console.log(distance, remainingDistance, totalDistance, velocity, ms );
+      remainingDistance -= distance;
+
+      if ( Math.abs(distance) < 0.1 ) {
+        var newIndex = index - slideCount;
+        slide(newIndex, 0, true);
+        return;
+      }
+      x += distance;
+      placeAnimationFrame( x );
+      requestAnimationFrame(animator);
+    };
+    requestAnimationFrame(animator);
+
   }
 
   // setup auto slideshow
@@ -272,6 +302,7 @@ function Swipe(container, options) {
 
   function stop() {
 
+    stopToss = true;
     delay = 0;
     clearTimeout(interval);
 
@@ -283,6 +314,7 @@ function Swipe(container, options) {
   var isScrolling;
   var lastVelocities; 
   var currentVelocitiesIndex = 0; 
+  var lastEventTime;
 
   // setup event capturing
   var events = {
@@ -330,7 +362,7 @@ function Swipe(container, options) {
       };
       lastVelocities = [];
       currentVelocitiesIndex = 0;
-      lastAnimationTime = new Date();
+      lastEventTime = new Date();
 
       // attach touchmove and touchend listeners
       element.addEventListener('touchmove', this, false);
@@ -355,8 +387,8 @@ function Swipe(container, options) {
 
       var distanceSinceLastEvent = delta.x - lastDelta.x;
       var now = new Date();
-      var timeSinceLastEvent = now - lastAnimationTime;
-      lastAnimationTime = now;
+      var timeSinceLastEvent = now - lastEventTime;
+      lastEventTime = now;
 
       lastVelocities[currentVelocitiesIndex] = distanceSinceLastEvent / timeSinceLastEvent;
       currentVelocitiesIndex += 1;
@@ -411,6 +443,7 @@ function Swipe(container, options) {
               velocity += lastVelocities[i];
             }
             velocity = velocity / lastVelocities.length;
+            stopToss = false;
             animateToss( velocity, delta.x );
           } else {
             if (absDelta > slideWidth / 2) {
