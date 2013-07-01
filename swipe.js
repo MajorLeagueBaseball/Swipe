@@ -262,6 +262,13 @@ function Swipe(container, options) {
   function animateToss( velocity, x ) {
 
     var totalDistance = 0;
+    if (velocity > -0.05 && velocity < 0.05) {
+      velocity = velocity < 0 ? -0.05 : 0.05;
+    }
+    if (velocity === Infinity || velocity === -Infinity) {
+      velocity = velocity < 0 ? -20 : 20;
+    }
+    console.log(velocity);
     var loopVelocity = velocity * 16;
     while( loopVelocity|0 !== 0 ) {
       totalDistance += loopVelocity;
