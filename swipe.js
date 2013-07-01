@@ -274,7 +274,9 @@ function Swipe(container, options) {
     totalDistance = (slideCount * slideWidth) - overflow;
 
     var overshoot = calculateOvershoot( totalDistance + x );
-    if (overshoot < -slideWidth || overshoot > slideWidth) {
+    if (overshoot < -slideWidth) {
+      totalDistance -= overshoot - slideWidth;
+    } else if (overshoot > slideWidth) {
       totalDistance -= overshoot + slideWidth;
     }
 
@@ -292,12 +294,11 @@ function Swipe(container, options) {
 
       var distance = (remainingDistance / totalDistance) * velocity * ms;
       remainingDistance -= distance;
-
       if ( Math.abs(distance) < 0.1 ) {
         var slidesMoved = Math.round(x / slideWidth);
         var newIndex = index - slidesMoved;
         if (newIndex > slidesPerPage && newIndex < slides.length - slidesPerPage) {
-          slide(newIndex, 0, true);
+          slide(newIndex, speed/2, true);
         } else {
           slide(newIndex, speed/2, true);
         }
@@ -451,7 +452,7 @@ function Swipe(container, options) {
       // determine if slide attempt is past start and end
       var isPastBounds = 
             !index && delta.x > 0 ||                     // if first slide and slide amt is greater than 0
-            index == slides.length - 1 && delta.x < 0;   // or if last slide and slide amt is less than 0
+            index >= slides.length - slidesPerPage && delta.x < 0;   // or if last slide and slide amt is less than 0
       
       // if not scrolling vertically
       if (!isScrolling) {
