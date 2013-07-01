@@ -103,6 +103,9 @@ function Swipe(container, options) {
 
   function slide(to, slideSpeed, startWithExistingPositions) {
 
+    if (+slideSpeed !== slideSpeed) {
+      slideSpeed = speed;
+    }
     // do nothing if already on requested slide
     //if (index == to) return;
     if (!options.continuous) {
@@ -130,7 +133,7 @@ function Swipe(container, options) {
         while(pos--) {
           if( slideWillPassThroughFrame( pos, startingIndex, to ) ) {
             var newPosition = getPositionOfSlideWhenAtIndex( pos, to );
-            move( pos, newPosition, slideSpeed || speed );
+            move( pos, newPosition, slideSpeed );
           }
         }
       });
@@ -164,7 +167,7 @@ function Swipe(container, options) {
     style.msTransitionDuration = 
     style.OTransitionDuration = 
     style.transitionDuration = speed + 'ms';
-    
+
     style.webkitTransform = 'translate(' + dist + 'px,0)' + 'translateZ(0)';
     style.msTransform = 
     style.MozTransform = 
@@ -211,26 +214,34 @@ function Swipe(container, options) {
     return overshoot / 2;
   }
 
-  function placeAnimationFrame( x, speed ) {
-
-    speed = speed || 0;
-
-    var overshoot = 0;
-    var leftBoundary = -slideWidth;
-    var rightBoundary = width;
+  function calculateOvershoot( x ) {
     var locationOfFirstSlide = x + slidePos[index] + ((-index) * slideWidth);
     var locationOfLastSlide = x + slidePos[index] + ((slides.length-1-index) * slideWidth);
     
     if (locationOfFirstSlide > 0) { // first slide, going left
-      rightBoundary += width; // this ensures that slides don't overlap when springing back.
-      overshoot = Math.abs(locationOfFirstSlide);
-      x -= overshoot;
-      x += calculateResistance( overshoot );
-
+      return locationOfFirstSlide;
+ 
     } else if (locationOfLastSlide < (width - slideWidth)) { // last slide, going right
+      return -(slideWidth - locationOfLastSlide);
+    }
+
+    return 0;
+  }
+
+  function placeAnimationFrame( x, speed ) {
+
+    speed = speed || 0;
+
+    var overshoot = calculateOvershoot( x );
+    var leftBoundary = -slideWidth;
+    var rightBoundary = width;
+    
+    if (overshoot < 0) { // first slide, going left
+      rightBoundary += width; // this ensures that slides don't overlap when springing back.
+      x -= calculateResistance( overshoot );
+
+    } else if (overshoot > 0) { // last slide, going right
       leftBoundary -= width; // this ensures that slides don't overlap when springing back.
-      overshoot = slideWidth - locationOfLastSlide;
-      x += overshoot;
       x -= calculateResistance( overshoot );
     }
 
@@ -258,9 +269,15 @@ function Swipe(container, options) {
     }
 
     var slideCount = Math.round(totalDistance / slideWidth);
-    totalDistance = (slideCount * slideWidth) - (x % slideWidth);
-    console.log( 'distance', totalDistance, 'slides', slideCount);
-    
+ 
+    var overflow = (x % slideWidth);
+    totalDistance = (slideCount * slideWidth) - overflow;
+
+    var overshoot = calculateOvershoot( totalDistance + x );
+    if (overshoot < -slideWidth || overshoot > slideWidth) {
+      totalDistance -= overshoot + slideWidth;
+    }
+
     var remainingDistance = totalDistance;
     var lastAnimationTime = new Date();
 
@@ -274,12 +291,16 @@ function Swipe(container, options) {
       lastAnimationTime = now;
 
       var distance = (remainingDistance / totalDistance) * velocity * ms;
-      console.log(distance, remainingDistance, totalDistance, velocity, ms );
       remainingDistance -= distance;
 
       if ( Math.abs(distance) < 0.1 ) {
-        var newIndex = index - slideCount;
-        slide(newIndex, 0, true);
+        var slidesMoved = Math.round(x / slideWidth);
+        var newIndex = index - slidesMoved;
+        if (newIndex > slidesPerPage && newIndex < slides.length - slidesPerPage) {
+          slide(newIndex, 0, true);
+        } else {
+          slide(newIndex, speed/2, true);
+        }
         return;
       }
       x += distance;
