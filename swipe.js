@@ -261,15 +261,15 @@ function Swipe(container, options) {
   var stopToss = false;
   function animateToss( velocity, x ) {
 
-    var totalDistance = 0;
+    var currentIndex = index;
     if (velocity > -0.05 && velocity < 0.05) {
       velocity = velocity < 0 ? -0.05 : 0.05;
     }
     if (velocity === Infinity || velocity === -Infinity) {
       velocity = velocity < 0 ? -20 : 20;
     }
-    console.log(velocity);
     var loopVelocity = velocity * 16;
+    var totalDistance = 0;
     while( loopVelocity|0 !== 0 ) {
       totalDistance += loopVelocity;
       loopVelocity = loopVelocity * 0.9;
@@ -292,6 +292,7 @@ function Swipe(container, options) {
 
     var animator = function() {
       if (stopToss) {
+        index = currentIndex;
         return;
       }
 
@@ -301,17 +302,12 @@ function Swipe(container, options) {
 
       var distance = (remainingDistance / totalDistance) * velocity * ms;
       remainingDistance -= distance;
-      if ( Math.abs(distance) < 0.1 ) {
-        var slidesMoved = Math.round(x / slideWidth);
-        var newIndex = index - slidesMoved;
-        if (newIndex > slidesPerPage && newIndex < slides.length - slidesPerPage) {
-          slide(newIndex, speed/2, true);
-        } else {
-          slide(newIndex, speed/2, true);
-        }
+      if ( Math.abs(distance) < 0.1 || Math.abs(remainingDistance) > Math.abs(totalDistance) ) {
+        slide(currentIndex, speed/2, true);
         return;
       }
       x += distance;
+      currentIndex = index - Math.round( x / slideWidth );
       placeAnimationFrame( x );
       requestAnimationFrame(animator);
     };
