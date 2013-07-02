@@ -298,6 +298,10 @@ function Swipe(container, options) {
 
       var now = new Date();
       var ms = now - lastAnimationTime;
+      if (ms < 5) { // the ipad simulator sometimes calls RAF too much.
+        setTimeout(animator, 10);
+        return;
+      }
       lastAnimationTime = now;
 
       var distance = (remainingDistance / totalDistance) * velocity * ms;
