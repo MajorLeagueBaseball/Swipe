@@ -143,6 +143,7 @@ function Swipe(container, options) {
     }
 
     index = to;
+    resetDelta();
 
     offloadFn(options.callback && options.callback(index, slides[index]));
 
@@ -259,13 +260,13 @@ function Swipe(container, options) {
   }
 
   var stopToss = false;
-  function animateToss( velocity, x ) {
+  function animateToss( velocity ) {
 
     var currentIndex = index;
-    if (velocity > -0.05 && velocity < 0.05) {
+    if (Math.abs(velocity) < 0.05) {
       velocity = velocity < 0 ? -0.05 : 0.05;
     }
-    if (velocity === Infinity || velocity === -Infinity) {
+    if (Math.abs(velocity) === Infinity) {
       velocity = velocity < 0 ? -20 : 20;
     }
     var loopVelocity = velocity * 16;
@@ -277,10 +278,10 @@ function Swipe(container, options) {
 
     var slideCount = Math.round(totalDistance / slideWidth);
  
-    var overflow = (x % slideWidth);
+    var overflow = (delta.x % slideWidth);
     totalDistance = (slideCount * slideWidth) - overflow;
 
-    var overshoot = calculateOvershoot( totalDistance + x );
+    var overshoot = calculateOvershoot( totalDistance + delta.x );
     if (overshoot < -slideWidth) {
       totalDistance -= overshoot - slideWidth;
     } else if (overshoot > slideWidth) {
@@ -292,7 +293,6 @@ function Swipe(container, options) {
 
     var animator = function() {
       if (stopToss) {
-        index = currentIndex;
         return;
       }
 
@@ -306,9 +306,9 @@ function Swipe(container, options) {
         slide(currentIndex, speed/2, true);
         return;
       }
-      x += distance;
-      currentIndex = index - Math.round( x / slideWidth );
-      placeAnimationFrame( x );
+      delta.x += distance;
+      currentIndex = index - Math.round( delta.x / slideWidth );
+      placeAnimationFrame( delta.x );
       requestAnimationFrame(animator);
     };
     requestAnimationFrame(animator);
@@ -335,11 +335,21 @@ function Swipe(container, options) {
 
   // setup initial vars
   var start = {};
-  var delta = {};
+  var delta = {
+    x: 0,
+    y: 0
+  };
   var isScrolling;
   var lastVelocities; 
   var currentVelocitiesIndex = 0; 
   var lastEventTime;
+
+  function resetDelta() {
+    delta = {
+      x: 0,
+      y: 0
+    };
+  }
 
   // setup event capturing
   var events = {
@@ -364,13 +374,14 @@ function Swipe(container, options) {
     start: function(event) {
 
       var touches = event.touches[0];
+      stopToss = true;
 
       // measure start values
       start = {
 
         // get initial touch coords
-        x: touches.pageX,
-        y: touches.pageY,
+        x: touches.pageX - delta.x,
+        y: touches.pageY - delta.y,
 
         // store time to determine touch duration
         time: +new Date()
@@ -379,12 +390,7 @@ function Swipe(container, options) {
       
       // used for testing first move event
       isScrolling = undefined;
-
-      // reset delta and end measurements
-      delta = {
-        x: 0,
-        y: 0
-      };
+      
       lastVelocities = [];
       currentVelocitiesIndex = 0;
       lastEventTime = new Date();
@@ -415,6 +421,11 @@ function Swipe(container, options) {
       var timeSinceLastEvent = now - lastEventTime;
       lastEventTime = now;
 
+      if ( lastVelocities[currentVelocitiesIndex-1] && // the direction switches
+          (lastVelocities[currentVelocitiesIndex-1] < 0) !== (distanceSinceLastEvent < 0) ) {
+        lastVelocities.length = 0;
+        currentVelocitiesIndex = 0;
+      }
       lastVelocities[currentVelocitiesIndex] = distanceSinceLastEvent / timeSinceLastEvent;
       currentVelocitiesIndex += 1;
       if (currentVelocitiesIndex === 4) {
@@ -469,7 +480,7 @@ function Swipe(container, options) {
             }
             velocity = velocity / lastVelocities.length;
             stopToss = false;
-            animateToss( velocity, delta.x );
+            animateToss( velocity );
           } else {
             if (absDelta > slideWidth / 2) {
               newIndex = index - Math.round(delta.x / slideWidth);
