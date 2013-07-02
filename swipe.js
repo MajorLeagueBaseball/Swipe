@@ -306,12 +306,12 @@ function Swipe(container, options) {
 
       var distance = (remainingDistance / totalDistance) * velocity * ms;
       remainingDistance -= distance;
+      delta.x += distance;
+      currentIndex = index - Math.round( delta.x / slideWidth );
       if ( Math.abs(distance) < 0.1 || Math.abs(remainingDistance) > Math.abs(totalDistance) ) {
         slide(currentIndex, speed/2, true);
         return;
       }
-      delta.x += distance;
-      currentIndex = index - Math.round( delta.x / slideWidth );
       placeAnimationFrame( delta.x );
       requestAnimationFrame(animator);
     };
