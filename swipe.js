@@ -263,8 +263,9 @@ function Swipe(container, options) {
   function animateToss( velocity ) {
 
     var currentIndex = index;
-    if (Math.abs(velocity) < 0.05) {
-      velocity = velocity < 0 ? -0.05 : 0.05;
+    if (Math.abs(velocity) < 0.1) {
+      currentIndex = index - Math.round( delta.x / slideWidth );
+      slide(currentIndex, speed/2, true);
     }
     if (Math.abs(velocity) === Infinity) {
       velocity = velocity < 0 ? -20 : 20;
