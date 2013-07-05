@@ -38,6 +38,7 @@ function Swipe(container, options) {
   var speed = options.speed || 300;
   options.continuous = options.continuous !== undefined ? options.continuous : true;
   options.autoStop = options.autoStop || options.autoStop === undefined;
+  var emit = options.emit || noop;
 
   function slideWillPassThroughFrame( slide, from, to ) {
     if (from < to) {
@@ -103,6 +104,8 @@ function Swipe(container, options) {
   }
 
   function slide(to, slideSpeed, startWithExistingPositions) {
+    
+    emit('move', to, index);
 
     if (+slideSpeed !== slideSpeed) {
       slideSpeed = speed;
@@ -200,6 +203,7 @@ function Swipe(container, options) {
         if (delay) begin();
 
         options.transitionEnd && options.transitionEnd.call(event, index, slides[index]);
+        emit('animationEnd', to);
 
         clearInterval(timer);
         return;
@@ -327,7 +331,10 @@ function Swipe(container, options) {
 
   function begin() {
 
-    interval = setTimeout(next, delay);
+    interval = setTimeout(function() {
+      next();
+      emit('autoAdvance');
+    }, delay);
 
   }
 
@@ -508,6 +515,13 @@ function Swipe(container, options) {
             } else {
               newIndex = index+1;
             }
+
+            // separate if/else for this for the first case above.
+            if (newIndex === index+1) {
+              emit('next');
+            } else if (newIndex === index-1) {
+              emit('prev');
+            }
             slide(newIndex, speed, true);
 
             options.callback && options.callback(index, slides[index]);
@@ -533,6 +547,7 @@ function Swipe(container, options) {
         if (delay) begin();
 
         options.transitionEnd && options.transitionEnd.call(event, index, slides[index]);
+        emit('animationEnd', index );
 
       }
 
@@ -590,6 +605,8 @@ function Swipe(container, options) {
       // cancel slideshow
       autoStop();
 
+      emit('prev');
+      
       prev();
 
     },
@@ -597,7 +614,9 @@ function Swipe(container, options) {
 
       // cancel slideshow
       autoStop();
-
+      
+      emit('next');
+      
       next();
 
     },
@@ -611,6 +630,9 @@ function Swipe(container, options) {
       
       // return total number of slides
       return slides.length;
+    },
+    setEmit: function( newEmit ) {
+      emit = newEmit;
     },
     kill: function() {
 
