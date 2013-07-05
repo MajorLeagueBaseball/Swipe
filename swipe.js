@@ -334,6 +334,19 @@ function Swipe(container, options) {
 
     stopToss = true;
     delay = 0;
+    pause();
+
+  }
+
+  function autoStop() {
+    if (options.autoStop) {
+      stop();
+    } else {
+      pause();
+    }
+  }
+
+  function pause() {
     clearTimeout(interval);
 
   }
@@ -449,7 +462,7 @@ function Swipe(container, options) {
         event.preventDefault();
 
         // stop slideshow
-        stop();
+        autoStop();
         
         placeAnimationFrame( delta.x );
 
@@ -566,7 +579,7 @@ function Swipe(container, options) {
     slide: function(to, speed) {
       
       // cancel slideshow
-      stop();
+      autoStop();
       
       slide(to, speed);
 
@@ -574,7 +587,7 @@ function Swipe(container, options) {
     prev: function() {
 
       // cancel slideshow
-      stop();
+      autoStop();
 
       prev();
 
@@ -582,7 +595,7 @@ function Swipe(container, options) {
     next: function() {
 
       // cancel slideshow
-      stop();
+      autoStop();
 
       next();
 
