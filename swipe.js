@@ -103,6 +103,20 @@ function Swipe(container, options) {
 
   }
 
+  function prevPage() {
+
+    if (index) slide(index-slidesPerPage);
+    else if (options.continuous) slide(slides.length-slidesPerPage);
+
+  }
+
+  function nextPage() {
+
+    if (index < slides.length - slidesPerPage) slide(index+slidesPerPage);
+    else if (options.continuous) slide(0);
+
+  }
+
   function slide(to, slideSpeed, startWithExistingPositions) {
     
     emit('move', to, index);
@@ -619,6 +633,24 @@ function Swipe(container, options) {
       
       next();
 
+    },
+    prevPage: function() {
+      
+      autoStop();
+
+      emit('prevPage');
+
+      prevPage();
+
+    },
+    nextPage: function() {
+      
+      autoStop();
+
+      emit('nextPage');
+
+      nextPage();
+      
     },
     getPos: function() {
 
