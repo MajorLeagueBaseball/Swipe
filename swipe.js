@@ -37,6 +37,7 @@ function Swipe(container, options) {
   var index = parseInt(options.startSlide, 10) || 0;
   var speed = options.speed || 300;
   options.continuous = options.continuous !== undefined ? options.continuous : true;
+  options.autoStop = options.autoStop || options.autoStop === undefined;
 
   function slideWillPassThroughFrame( slide, from, to ) {
     if (from < to) {
