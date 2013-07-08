@@ -242,7 +242,7 @@ function Swipe(container, options) {
       return locationOfFirstSlide;
  
     } else if (locationOfLastSlide < (width - slideWidth)) { // last slide, going right
-      return -(slideWidth - locationOfLastSlide);
+      return -((slideWidth * (slidesPerPage - 1)) - locationOfLastSlide);
     }
 
     return 0;
