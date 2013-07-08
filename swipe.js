@@ -666,16 +666,22 @@ function Swipe(container, options) {
       nextPage();
       
     },
-    getPos: function() {
+    currentSlide: function() {
 
       // return current index position
       return index;
 
     },
-    getNumSlides: function() {
+    slideCount: function() {
       
       // return total number of slides
       return slides.length;
+    },
+    slidesPerPage: function() {
+      return slidesPerPage;
+    },
+    getSlideElement: function( index ) {
+      return slides[index];
     },
     setEmit: function( newEmit ) {
       emit = newEmit;
