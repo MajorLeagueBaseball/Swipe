@@ -716,7 +716,10 @@ if ( window.jQuery || window.Zepto ) {
   (function($) {
     $.fn.Swipe = function(params) {
       return this.each(function() {
-        $(this).data('Swipe', new Swipe($(this)[0], params));
+        var $self = $(this);
+        var swipe = new Swipe($self[0], params);
+        swipe.setEmit(function() {$self.trigger.apply( $self, arguments );});
+        $(this).data('Swipe', swipe);
       });
     };
   })( window.jQuery || window.Zepto );
