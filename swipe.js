@@ -20,6 +20,7 @@ function Swipe(container, options) {
   var browser = {
     addEventListener: !!window.addEventListener,
     touch: ('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch,
+    msPointer: window.navigator && window.navigator.msPointerEnabled,
     transitions: (function(temp) {
       var props = ['transitionProperty', 'WebkitTransition', 'MozTransition', 'OTransition', 'msTransition'];
       for ( var i in props ) if (temp.style[ props[i] ] !== undefined) return true;
@@ -235,6 +236,7 @@ function Swipe(container, options) {
   // setup initial vars
   var start = {};
   var delta = {};
+  var deltaPointer = {};
   var isScrolling;      
 
   // setup event capturing
@@ -243,8 +245,11 @@ function Swipe(container, options) {
     handleEvent: function(event) {
 
       switch (event.type) {
+        case 'MSPointerDown':
         case 'touchstart': this.start(event); break;
+        case 'MSGestureChange':
         case 'touchmove': this.move(event); break;
+        case 'MSGestureEnd':
         case 'touchend': offloadFn(this.end(event)); break;
         case 'webkitTransitionEnd':
         case 'msTransitionEnd':
@@ -259,7 +264,19 @@ function Swipe(container, options) {
     },
     start: function(event) {
 
-      var touches = event.touches[0];
+      var touches;
+      if (browser.touch) {
+        touches = event.touches[0];
+      } else if (browser.msPointer) {
+        event.currentTarget._gesture.addPointer(event.pointerId);
+        
+        deltaPointer = {
+          x: 0,
+          y: 0
+        };
+        return;
+      }
+
 
       // measure start values
       start = {
@@ -282,22 +299,43 @@ function Swipe(container, options) {
       // attach touchmove and touchend listeners
       element.addEventListener('touchmove', this, false);
       element.addEventListener('touchend', this, false);
-
     },
     move: function(event) {
 
       // ensure swiping with one touch and not pinching
-      if ( event.touches.length > 1 || event.scale && event.scale !== 1) return;
+      if (browser.touch) {
+        if ( event.touches.length > 1 || event.scale && event.scale !== 1) return;
+      
+      } else if (browser.msPointer) {
+        if (event.scale !== 1) return;
+        if (event.detail === event.MSGESTURE_FLAG_INERTIA) {
+          setImmediate(function (){
+            event.target._gesture.stop();
+          });
+          return;
+        }
+      }
 
       if (options.disableScroll) event.preventDefault();
 
-      var touches = event.touches[0];
+      var touches;
+
+      if(browser.touch) touches = event.touches[0];
 
       // measure change in x and y
-      delta = {
-        x: touches.pageX - start.x,
-        y: touches.pageY - start.y
-      };
+      if(browser.touch){
+         delta = {
+          x: touches.pageX - start.x,
+          y: touches.pageY - start.y
+         };
+      } else if (browser.msPointer) {
+        deltaPointer.x = deltaPointer.x + event.translationX;
+        deltaPointer.y = deltaPointer.y + event.translationY;
+        delta = {
+          x: deltaPointer.x,
+          y: deltaPointer.y
+        };
+      }
 
       // determine if scrolling test has run - one time test
       if ( typeof isScrolling == 'undefined') {
@@ -449,6 +487,14 @@ function Swipe(container, options) {
     
     // set touchstart event on element    
     if (browser.touch) element.addEventListener('touchstart', events, false);
+    if (browser.msPointer){ 
+      element.addEventListener('MSPointerDown', events, false);
+      element.addEventListener('MSGestureChange', events, false);
+      element.addEventListener('MSGestureEnd', events, false);
+      element._gesture = new MSGesture();
+      element._gesture.target = element;
+
+    }
 
     if (browser.transitions) {
       element.addEventListener('webkitTransitionEnd', events, false);
@@ -535,6 +581,9 @@ function Swipe(container, options) {
 
         // remove current event listeners
         element.removeEventListener('touchstart', events, false);
+        element.removeEventListener('MSPointerDown', events, false);
+        element.removeEventListener('MSGestureChange', this, false);
+        element.removeEventListener('MSGestureEnd', this, false);
         element.removeEventListener('webkitTransitionEnd', events, false);
         element.removeEventListener('msTransitionEnd', events, false);
         element.removeEventListener('oTransitionEnd', events, false);
