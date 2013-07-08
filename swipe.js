@@ -7,6 +7,20 @@
  * Copyright 2013, MIT License
  *
 */
+(function(factory) {
+  //AMD
+  if (typeof define === 'function' && define.amd) {
+    define([], factory);
+
+    //NODE
+  } else if (typeof module === 'object' && module.exports) {
+    module.exports = factory();
+
+    //GLOBAL
+  } else {
+    window.Swipe = factory();
+  }
+})(function() {
 
 function Swipe(container, options) {
 
@@ -724,3 +738,5 @@ if ( window.jQuery || window.Zepto ) {
     };
   })( window.jQuery || window.Zepto );
 }
+  return Swipe;
+});
