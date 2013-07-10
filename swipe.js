@@ -55,6 +55,13 @@ function Swipe(container, options) {
   var emit = options.emit || noop;
 
   function slideWillPassThroughFrame( slide, from, to ) {
+    
+    if (delta.x > 0 === from >= to) {
+      from -= 1;
+    } else if (delta.x < 0 === from < to) {
+      from += 1;
+    }
+    
     if (from < to) {
       return slide >= from && slide <= to + slidesPerPage;
     } else {
@@ -92,6 +99,7 @@ function Swipe(container, options) {
 
       if (browser.transitions) {
         slide.style.left = (pos * -slideWidth) + 'px';
+        slide.style.webkitTransitionTimingFunction = 'ease-out';
         move( pos, getPositionOfSlideWhenAtIndex( pos, index ), 0 );
       }
 
@@ -101,6 +109,14 @@ function Swipe(container, options) {
 
     container.style.visibility = 'visible';
 
+  }
+
+  function setupIfSizeChanged() {
+    var newWidth = container.getBoundingClientRect().width || container.offsetWidth;
+    if (newWidth !== width) {
+      setup();
+      emit('sizeChange');
+    }
   }
 
   function prev() {
@@ -168,6 +184,7 @@ function Swipe(container, options) {
             move( pos, newPosition, slideSpeed );
           }
         }
+        resetDelta();
       });
 
     } else {
@@ -175,7 +192,6 @@ function Swipe(container, options) {
     }
 
     index = to;
-    resetDelta();
 
     offloadFn(options.callback && options.callback(index, slides[index]));
 
@@ -419,7 +435,7 @@ function Swipe(container, options) {
         case 'oTransitionEnd':
         case 'otransitionend':
         case 'transitionend': offloadFn(this.transitionEnd(event)); break;
-        case 'resize': offloadFn(setup.call()); break;
+        case 'resize': offloadFn(setupIfSizeChanged); break;
       }
 
       if (options.stopPropagation) event.stopPropagation();
@@ -527,7 +543,7 @@ function Swipe(container, options) {
 
         if (isValidSlide && !isPastBounds) {
           var newIndex;
-          if (slidesPerPage > 1) {
+          if (slidesPerPage > 1 || options.toss) {
             var velocity = 0;
             for( var i = 0; i < lastVelocities.length; i += 1) {
               velocity += lastVelocities[i];
@@ -628,6 +644,14 @@ function Swipe(container, options) {
       slide(to, speed);
 
     },
+    to: function(to, speed) {
+      
+      // cancel slideshow
+      autoStop();
+      
+      slide(to, speed);
+
+    },
     prev: function() {
 
       // cancel slideshow
@@ -682,6 +706,9 @@ function Swipe(container, options) {
     },
     getSlideElement: function( index ) {
       return slides[index];
+    },
+    getSlideData: function( property ) {
+      return slides[index].getAttribute('data-'+property);
     },
     setEmit: function( newEmit ) {
       emit = newEmit;
