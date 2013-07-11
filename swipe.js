@@ -64,7 +64,8 @@ var browser = {
   })(document.createElement('swipe'))
 };
 var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
-                            window.webkitRequestAnimationFrame || window.msRequestAnimationFrame; 
+                            window.webkitRequestAnimationFrame || window.msRequestAnimationFrame ||
+                            function(cb) { setTimeout(cb, 16) }; 
 
 
 function Swipe(container, options) {
