@@ -22,26 +22,54 @@
   }
 })(function() {
 
+function getStyle( el, styleProp ) {
+  var y;
+  if (el.currentStyle) {
+    y = el.currentStyle[styleProp];
+  } else if (window.getComputedStyle) {
+    y = document.defaultView.getComputedStyle(el,null).getPropertyValue(styleProp);
+  }
+  return y;
+}
+
+function getWidth( element ) {
+  var width = element.offsetWidth;
+  if (width === 0) {
+    var widthStr = getStyle( element, 'width' );
+    if (widthStr === 'auto') {
+      width = getWidth( element.parentNode );
+    } else if (widthStr.charAt(widthStr.length-1) === '%') {
+      var percent = parseInt( widthStr, 10 );
+      var parentWidth = getWidth( element.parentNode );
+      width = parentWidth * (percent / 100);
+    } else {
+      width = parseInt( widthStr, 10 );
+    }
+  }
+  return width;
+}
+
+// utilities
+var noop = function() {}; // simple no operation function
+var offloadFn = function(fn) { setTimeout(fn || noop, 0) }; // offload a functions execution
+
+// check browser capabilities
+var browser = {
+  addEventListener: !!window.addEventListener,
+  touch: ('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch,
+  transitions: (function(temp) {
+    var props = ['transitionProperty', 'WebkitTransition', 'MozTransition', 'OTransition', 'msTransition'];
+    for ( var i in props ) if (temp.style[ props[i] ] !== undefined) return true;
+    return false;
+  })(document.createElement('swipe'))
+};
+var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+                            window.webkitRequestAnimationFrame || window.msRequestAnimationFrame; 
+
+
 function Swipe(container, options) {
 
   "use strict";
-
-  // utilities
-  var noop = function() {}; // simple no operation function
-  var offloadFn = function(fn) { setTimeout(fn || noop, 0) }; // offload a functions execution
-  
-  // check browser capabilities
-  var browser = {
-    addEventListener: !!window.addEventListener,
-    touch: ('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch,
-    transitions: (function(temp) {
-      var props = ['transitionProperty', 'WebkitTransition', 'MozTransition', 'OTransition', 'msTransition'];
-      for ( var i in props ) if (temp.style[ props[i] ] !== undefined) return true;
-      return false;
-    })(document.createElement('swipe'))
-  };
-  var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
-                              window.webkitRequestAnimationFrame || window.msRequestAnimationFrame; 
 
   // quit if no root element
   if (!container) return;
@@ -85,8 +113,8 @@ function Swipe(container, options) {
     slides[0].style.width = '';
 
     // determine width of each slide
-    width = container.getBoundingClientRect().width || container.offsetWidth;
-    slideWidth = slides[0].getBoundingClientRect().width || slides[0].offsetWidth;
+    width = getWidth( container );
+    slideWidth = getWidth( slides[0] );
     slidesPerPage = Math.ceil( width / slideWidth );
 
     element.style.width = (slides.length * slideWidth) + 'px';
