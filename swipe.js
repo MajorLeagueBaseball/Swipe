@@ -454,6 +454,19 @@ function Swipe(container, options) {
     };
   }
 
+  function preventDefault( event ) {
+    event.preventDefault();
+  }
+
+  function preventClickFromTouch( el ) {
+
+    el.addEventListener('click', preventDefault, true );
+
+    setTimeout(function() {
+      el.removeEventListener('click', preventDefault, true );
+    }, 500);
+  }
+
   // setup event capturing
   var events = {
 
@@ -573,6 +586,10 @@ function Swipe(container, options) {
       
       // if not scrolling vertically
       if (!isScrolling) {
+
+        if (isValidSlide) {
+          preventClickFromTouch( event.target );
+        }
 
         if (isValidSlide && !isPastBounds) {
           var newIndex;
