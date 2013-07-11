@@ -81,6 +81,9 @@ function Swipe(container, options) {
     // create an array to store current positions of each slide
     slidePos = new Array(slides.length);
 
+    element.style.width = '';
+    slides[0].style.width = '';
+
     // determine width of each slide
     width = container.getBoundingClientRect().width || container.offsetWidth;
     slideWidth = slides[0].getBoundingClientRect().width || slides[0].offsetWidth;
@@ -559,6 +562,8 @@ function Swipe(container, options) {
             } else {
               newIndex = index+1;
             }
+
+            newIndex = Math.min( Math.max( newIndex, 0), slides.length-slidesPerPage);
 
             // separate if/else for this for the first case above.
             if (newIndex === index+1) {
