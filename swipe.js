@@ -78,7 +78,7 @@ function Swipe(container, options) {
   options = options || {};
   var index = parseInt(options.startSlide, 10) || 0;
   var speed = options.speed || 300;
-  options.continuous = options.continuous !== undefined ? options.continuous : true;
+  options.continuous = !!options.continuous;
   options.autoStop = options.autoStop || options.autoStop === undefined;
   var emit = options.emit || noop;
 
@@ -187,10 +187,12 @@ function Swipe(container, options) {
     }
     // do nothing if already on requested slide
     //if (index == to) return;
-    if (!options.continuous) {
-      to = Math.max( to, 0 );
-      to = Math.min( to, slides.length - slidesPerPage );
+    if (options.continuous) {
+      to = (to + slides.length - slidesPerPage) % (slides.length - slidesPerPage);
     }
+    to = Math.max( to, 0 );
+    to = Math.min( to, slides.length - slidesPerPage );
+    
     var startingIndex = index;
     
     if (browser.transitions) {
