@@ -289,12 +289,12 @@ function Swipe(container, options) {
     var leftBoundary = -slideWidth;
     var rightBoundary = width;
     
-    if (overshoot < 0) { // first slide, going left
-      rightBoundary += width; // this ensures that slides don't overlap when springing back.
+    if (overshoot < 0) { // last slide, finger moving right
+      leftBoundary -= width; // this ensures that slides don't overlap when springing back.
       x -= calculateResistance( overshoot );
 
-    } else if (overshoot > 0) { // last slide, going right
-      leftBoundary -= width; // this ensures that slides don't overlap when springing back.
+    } else if (overshoot > 0) { // first slide, finger moving left
+      rightBoundary += width; // this ensures that slides don't overlap when springing back.
       x -= calculateResistance( overshoot );
     }
 
