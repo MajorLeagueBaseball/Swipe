@@ -80,7 +80,8 @@ function Swipe(container, options) {
   var index = parseInt(options.startSlide, 10) || 0;
   var speed = options.speed || 300;
   options.continuous = !!options.continuous;
-  options.autoStop = options.autoStop || options.autoStop === undefined;
+  options.autoStop = options.autoStop === undefined ? false : !!options.autoStop;
+  options.snapToNearest = options.snapToNearest === undefined ? false : !!options.snapToNearest;
   var emit = options.emit || noop;
 
   function slideWillPassThroughFrame( slide, from, to ) {
@@ -300,7 +301,7 @@ function Swipe(container, options) {
 
   function calculateOvershoot( x ) {
     var locationOfFirstSlide = x + slidePos[index] + ((-index) * slideWidth);
-    var locationOfLastSlide = x + slidePos[index] + ((slides.length-1-index) * slideWidth);
+    var locationOfLastSlide = x + slidePos[index] + ((slides.length-index) * slideWidth);
     
     if (locationOfFirstSlide > 0) { // first slide, going left
       return locationOfFirstSlide;
@@ -338,6 +339,7 @@ function Swipe(container, options) {
         location = width;
       }
       translate(i, location, speed);
+
       
     }
   }
@@ -347,6 +349,9 @@ function Swipe(container, options) {
 
     var currentIndex = index;
     if (Math.abs(velocity) < 0.1) {
+      if (!options.snapToNearest) {
+        return;
+      }
       currentIndex = index - Math.round( delta.x / slideWidth );
       slide(currentIndex, speed/2, true);
     }
@@ -361,9 +366,11 @@ function Swipe(container, options) {
     }
 
     var slideCount = Math.round(totalDistance / slideWidth);
- 
-    var overflow = (delta.x % slideWidth);
-    totalDistance = (slideCount * slideWidth) - overflow;
+
+    if (options.snapToNearest) {
+      var overflow = (delta.x % slideWidth);
+      totalDistance = (slideCount * slideWidth) - overflow;
+    }
 
     var overshoot = calculateOvershoot( totalDistance + delta.x );
     if (overshoot < -slideWidth) {
@@ -390,12 +397,20 @@ function Swipe(container, options) {
 
       var distance = (remainingDistance / totalDistance) * velocity * ms;
       remainingDistance -= distance;
-      delta.x += distance;
-      currentIndex = index - Math.round( delta.x / slideWidth );
       if ( Math.abs(distance) < 0.1 || Math.abs(remainingDistance) > Math.abs(totalDistance) ) {
-        slide(currentIndex, speed/2, true);
+        currentIndex = index - Math.round( delta.x / slideWidth );
+        if (!options.snapToNearest && currentIndex >= 0 && currentIndex < slides.length-slidesPerPage) {
+          emit('move', currentIndex, index);
+          //index = currentIndex;
+          //delta.x = delta.x % slideWidth;
+        } else {
+          console.log('else clause');
+          currentIndex = index - Math.round( delta.x / slideWidth );
+          slide(currentIndex, speed/2, true);
+        }
         return;
       }
+      delta.x += distance;
       placeAnimationFrame( delta.x );
       requestAnimationFrame(animator);
     };
