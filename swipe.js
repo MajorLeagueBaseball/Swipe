@@ -75,7 +75,8 @@ function Swipe(container, options) {
   // quit if no root element
   if (!container) return;
   var element = container.children[0];
-  var slides, slidePos, width, slidesPerPage, slideWidth;
+  var slides, slidePos, width, slidesPerPage, slideWidth, enabled = true;
+  
   options = options || {};
   var index = parseInt(options.startSlide, 10) || 0;
   var speed = options.speed || 300;
@@ -497,7 +498,9 @@ function Swipe(container, options) {
   var events = {
 
     handleEvent: function(event) {
-
+      if (!enabled) {
+        return;
+      }
       switch (event.type) {
         case 'touchstart': this.start(event); break;
         case 'touchmove': this.move(event); break;
@@ -793,6 +796,13 @@ function Swipe(container, options) {
     },
     setEmit: function( newEmit ) {
       emit = newEmit;
+    },
+
+    enable: function() {
+      enabled = true;
+    },
+    disable: function() {
+      enabled = false;
     },
     kill: function() {
 
