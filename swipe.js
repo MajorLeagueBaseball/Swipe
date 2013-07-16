@@ -410,13 +410,11 @@ function Swipe(container, options) {
       remainingDistance -= distance;
       if ( Math.abs(distance) < 0.1 || Math.abs(remainingDistance) > Math.abs(totalDistance) ) {
         currentIndex = index - Math.round( delta.x / slideWidth );
-        if (!options.snapToNearest && currentIndex >= 0 && currentIndex < slides.length-slidesPerPage) {
+        if (!options.snapToNearest && currentIndex > 0 && currentIndex < slides.length-slidesPerPage) {
           emit('move', currentIndex, index);
           //index = currentIndex;
           //delta.x = delta.x % slideWidth;
         } else {
-          console.log('else clause');
-          currentIndex = index - Math.round( delta.x / slideWidth );
           slide(currentIndex, speed/2, true);
         }
         return;
