@@ -91,6 +91,10 @@ function Swipe(container, options) {
     } else if (delta.x < 0 === from < to) {
       from += 1;
     }
+
+    if (to === slides.length - slidesPerPage) {
+      to -= 1;
+    }
     
     if (from < to) {
       return slide >= from && slide <= to + slidesPerPage;
@@ -100,7 +104,12 @@ function Swipe(container, options) {
   }
 
   function getPositionOfSlideWhenAtIndex( slide, index ) {
-    return (slide - index) * slideWidth;
+    if (index === slides.length - slidesPerPage) {
+      var extraSpace = (slidesPerPage * slideWidth) - width;
+      return (slide - index) * slideWidth - extraSpace;
+    } else {
+      return (slide - index) * slideWidth;
+    }
   }
   
   function setup() {
@@ -117,7 +126,8 @@ function Swipe(container, options) {
     // determine width of each slide
     width = getWidth( container );
     slideWidth = getWidth( slides[0] );
-    slidesPerPage = Math.ceil( width / slideWidth );
+    var slideClientWidth = slides[0].clientWidth || slideWidth;
+    slidesPerPage = Math.floor( width / slideWidth );
 
     element.style.width = (slides.length * slideWidth) + 'px';
 
@@ -127,7 +137,7 @@ function Swipe(container, options) {
 
       var slide = slides[pos];
 
-      slide.style.width = slideWidth + 'px';
+      slide.style.width = slideClientWidth + 'px';
       slide.setAttribute('data-index', pos);
 
       if (browser.transitions) {
@@ -465,7 +475,7 @@ function Swipe(container, options) {
 
   function resetDelta() {
     delta = {
-      x: 0,
+      x: (slidesPerPage * slideWidth) - width,
       y: 0
     };
   }
