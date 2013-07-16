@@ -1,12 +1,3 @@
-/*jshint lastsemic: true, expr: true */
-/*global DocumentTouch: true */
-/*
- * Swipe 2.0
- *
- * Brad Birdsall
- * Copyright 2013, MIT License
- *
-*/
 (function(factory) {
   //AMD
   if (typeof define === 'function' && define.amd) {
@@ -31,24 +22,37 @@
 		create: function( container, options ) {
 			var slider = new Swipe( container, options );
 
-			var trigger = paperboy.mixin(slider, ['move', 'animationEnd', 'autoAdvance', 'next', 'prev']);
+			var trigger = paperboy.mixin(slider, ['move', 'animationEnd', 'autoAdvance', 'next', 'prev', 'sizeChange']);
 			slider.setEmit(trigger);
 
 			// wire up next/prev buttons
 			if (options.next) {
-				$(options.next).on('click', slider.next);
+				$(options.next).on('click', function( event ) {
+					slider.next();
+					event.preventDefault();
+				});
 			}
 			if (options.prev) {
-				$(options.prev).on('click', slider.prev);
+				$(options.prev).on('click', function( event ) {
+					slider.prev();
+					event.preventDefault();
+				});
 			}
 
 			if (options.nextPage) {
-				$(options.nextPage).on('click', slider.nextPage);
+				$(options.nextPage).on('click', function( event ) {
+					slider.nextPage();
+					event.preventDefault();
+				});
 			}
 			if (options.prevPage) {
-				$(options.prevPage).on('click', slider.prevPage);
+				$(options.prevPage).on('click', function( event ) {
+					slider.prevPage();
+					event.preventDefault();
+				});
 			}
 
+			var slidesLoaded = [];
 			// auto load images
 			slider.on('move', function( newIndex ) {
 			    var start = newIndex;
@@ -56,12 +60,18 @@
 			    var end = start + (slidesPerPage * 2);
 			    for (var i = start; i < end; i += 1) {
 					var slide = slider.getSlideElement( i );
-					$('[data-src]', slide).each(replaceImageSrc);
+					if (slidesLoaded.indexOf(slide) === -1) {
+						$('[data-src]', slide).each(replaceImageSrc);
+						slidesLoaded.push(slide);
+					}
 			    }
 			});
 
-			$('[data-src]', slider.getSlideElement(0)).each(replaceImageSrc);
-			$('[data-src]', slider.getSlideElement(1)).each(replaceImageSrc);
+			var slidesPerPage = slider.slidesPerPage();
+			var currentSlide = slider.currentSlide();
+			for( var i = 0; i < slidesPerPage*2; i += 1) {
+				$('[data-src]', slider.getSlideElement(i + currentSlide)).each(replaceImageSrc);
+			}
 
 			return slider;
 		}
