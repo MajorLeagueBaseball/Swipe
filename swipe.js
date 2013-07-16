@@ -387,7 +387,7 @@ function Swipe(container, options) {
     if (overshoot < -slideWidth) {
       totalDistance -= overshoot - slideWidth;
     } else if (overshoot > slideWidth) {
-      totalDistance -= overshoot + slideWidth;
+      totalDistance -= overshoot - slideWidth;
     }
 
     var remainingDistance = totalDistance;
