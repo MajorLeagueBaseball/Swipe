@@ -106,8 +106,8 @@ function Swipe(container, options) {
 
   function getPositionOfSlideWhenAtIndex( slide, index ) {
     if (index === slides.length - slidesPerPage) {
-      var extraSpace = (slidesPerPage * slideWidth) - width;
-      return (slide - index) * slideWidth - extraSpace;
+      var extraSpace = width % slideWidth;
+      return (slide - index) * slideWidth + extraSpace;
     } else {
       return (slide - index) * slideWidth;
     }
@@ -312,12 +312,12 @@ function Swipe(container, options) {
 
   function calculateOvershoot( x ) {
     var locationOfFirstSlide = x + slidePos[index] + ((-index) * slideWidth);
-    var locationOfLastSlide = x + slidePos[index] + ((slides.length-index) * slideWidth);
+    var locationOfLastSlide = x + slidePos[index] + ((slides.length-index-slidesPerPage) * slideWidth) + width % slideWidth;
     
     if (locationOfFirstSlide > 0) { // first slide, going left
       return locationOfFirstSlide;
  
-    } else if (locationOfLastSlide < (width - slideWidth)) { // last slide, going right
+    } else if (locationOfLastSlide < (width + (slideWidth * slidesPerPage)) ) { // last slide, going right
       return -((slideWidth * (slidesPerPage - 1)) - locationOfLastSlide);
     }
 
