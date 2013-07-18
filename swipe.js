@@ -317,7 +317,7 @@ function Swipe(container, options) {
     if (locationOfFirstSlide > 0) { // first slide, going left
       return locationOfFirstSlide;
  
-    } else if (locationOfLastSlide < (width + (slideWidth * slidesPerPage)) ) { // last slide, going right
+    } else if (locationOfLastSlide < width - slideWidth - width % slideWidth) { //(width + (slideWidth * slidesPerPage)) ) { // last slide, going right
       return -((slideWidth * (slidesPerPage - 1)) - locationOfLastSlide);
     }
 
@@ -385,7 +385,7 @@ function Swipe(container, options) {
 
     var overshoot = calculateOvershoot( totalDistance + delta.x );
     if (overshoot < -slideWidth) {
-      totalDistance -= overshoot - slideWidth;
+      totalDistance -= overshoot + slideWidth;
     } else if (overshoot > slideWidth) {
       totalDistance -= overshoot - slideWidth;
     }
@@ -408,12 +408,15 @@ function Swipe(container, options) {
 
       var distance = (remainingDistance / totalDistance) * velocity * ms;
       remainingDistance -= distance;
+
+      if (Math.abs(distance) > Math.abs(remainingDistance)) { // if the thread was blocked for a long time this will happen.
+        distance = remainingDistance;
+      }
+
       if ( Math.abs(distance) < 0.1 || Math.abs(remainingDistance) > Math.abs(totalDistance) ) {
         currentIndex = index - Math.round( delta.x / slideWidth );
         if (!options.snapToNearest && currentIndex > 0 && currentIndex < slides.length-slidesPerPage) {
           emit('move', currentIndex, index);
-          //index = currentIndex;
-          //delta.x = delta.x % slideWidth;
         } else {
           slide(currentIndex, speed/2, true);
         }
