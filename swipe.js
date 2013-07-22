@@ -213,9 +213,11 @@ function Swipe(container, options) {
 
       if (!startWithExistingPositions) {
         while(pos--) {
+          var oldPosition = getPositionOfSlideWhenAtIndex( pos, startingIndex );
           if( index !== to && slideWillPassThroughFrame( pos, startingIndex, to ) ) {
-            var oldPosition = getPositionOfSlideWhenAtIndex( pos, startingIndex );
             move( pos, oldPosition, 0 );
+          } else {
+            slidePos[pos] = oldPosition;
           }
         }
       }
@@ -225,9 +227,11 @@ function Swipe(container, options) {
         pos = slides.length;      
        
         while(pos--) {
+          var newPosition = getPositionOfSlideWhenAtIndex( pos, to );
           if( slideWillPassThroughFrame( pos, startingIndex, to ) ) {
-            var newPosition = getPositionOfSlideWhenAtIndex( pos, to );
             move( pos, newPosition, slideSpeed );
+          } else {
+            slidePos[pos] = newPosition;
           }
         }
         delta.x = 0;
@@ -311,8 +315,8 @@ function Swipe(container, options) {
   }
 
   function calculateOvershoot( x ) {
-    var locationOfFirstSlide = x + slidePos[index] + ((-index) * slideWidth);
-    var locationOfLastSlide = x + slidePos[index] + ((slides.length-index-slidesPerPage) * slideWidth) + width % slideWidth;
+    var locationOfFirstSlide = x + slidePos[0];
+    var locationOfLastSlide = x + slidePos[slides.length-1] + width % slideWidth;
     
     if (locationOfFirstSlide > 0) { // first slide, going left
       return locationOfFirstSlide;
@@ -343,7 +347,7 @@ function Swipe(container, options) {
 
     // translate 1:1
     for( var i = 0; i < slides.length; i++ ) {
-      var location = x + slidePos[index] + ((i-index) * slideWidth);
+      var location = x + slidePos[i];
       if (location < leftBoundary) { // not visible, to the left
         location = -slideWidth;
       } else if (location > rightBoundary) { // not visible, to the right
@@ -353,6 +357,17 @@ function Swipe(container, options) {
 
       
     }
+  }
+
+  function setCurrentLocationAfterToss() {
+    var currentIndex = index - Math.round( delta.x / slideWidth );
+    //var pxDiff = (index - currentIndex) * slideWidth;
+    for( var i = 0; i < slides.length; i += 1) {
+      slidePos[i] += delta.x;
+    }
+    delta.x = 0;//pxDiff;
+    emit('move', currentIndex, index);
+    index = currentIndex;
   }
 
   var stopToss = false;
@@ -375,6 +390,10 @@ function Swipe(container, options) {
       totalDistance += loopVelocity;
       loopVelocity = loopVelocity * 0.9;
     }
+    if (totalDistance === 0) {
+      setCurrentLocationAfterToss();
+      return;
+    }
 
     var slideCount = Math.round(totalDistance / slideWidth);
 
@@ -395,6 +414,9 @@ function Swipe(container, options) {
 
     var animator = function() {
       if (stopToss) {
+        if (!options.snapToNearest) {
+          setCurrentLocationAfterToss();
+        }
         return;
       }
 
@@ -416,7 +438,7 @@ function Swipe(container, options) {
       if ( Math.abs(distance) < 0.1 || Math.abs(remainingDistance) > Math.abs(totalDistance) ) {
         currentIndex = index - Math.round( delta.x / slideWidth );
         if (!options.snapToNearest && currentIndex > 0 && currentIndex < slides.length-slidesPerPage) {
-          emit('move', currentIndex, index);
+          setCurrentLocationAfterToss();
         } else {
           slide(currentIndex, speed/2, true);
         }
@@ -524,8 +546,8 @@ function Swipe(container, options) {
       start = {
 
         // get initial touch coords
-        x: touches.pageX - delta.x,
-        y: touches.pageY - delta.y,
+        x: touches.pageX,
+        y: touches.pageY,
 
         // store time to determine touch duration
         time: +new Date()
@@ -556,13 +578,14 @@ function Swipe(container, options) {
       if (options.disableScroll) event.preventDefault();
 
       var touches = event.touches[0];
-      var lastDelta = delta;
+      var lastDelta = {
+        x: delta.x,
+        y: delta.y
+      };
 
       // measure change in x and y
-      delta = {
-        x: touches.pageX - start.x,
-        y: touches.pageY - start.y
-      };
+      delta.x = touches.pageX - start.x;
+      delta.y = touches.pageY - start.y;
 
       var distanceSinceLastEvent = delta.x - lastDelta.x;
       var now = new Date();
