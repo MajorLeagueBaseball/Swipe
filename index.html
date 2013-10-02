@@ -30,7 +30,7 @@
 }
 .swipe-wrap > div {
   float:left;
-  width:50%;
+  width:40%;
   position: relative;
 }
 
@@ -127,6 +127,7 @@ window.mySwipe = Swipe(elem, {
   // auto: 3000,
   continuous: false,
   snapToNearest: false,
+  emit: function(){ console.log.apply(console, arguments) }
   // disableScroll: true,
   // stopPropagation: true,
   // callback: function(index, element) {},

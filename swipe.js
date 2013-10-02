@@ -371,8 +371,9 @@ function Swipe(container, options) {
   }
 
   var stopToss = false;
+  var tossing = false;
   function animateToss( velocity ) {
-
+    tossing = true;
     var currentIndex = index;
     if (Math.abs(velocity) < 0.1) {
       if (!options.snapToNearest) {
@@ -414,9 +415,7 @@ function Swipe(container, options) {
 
     var animator = function() {
       if (stopToss) {
-        if (!options.snapToNearest) {
-          setCurrentLocationAfterToss();
-        }
+        tossing = false;
         return;
       }
 
@@ -436,6 +435,7 @@ function Swipe(container, options) {
       }
 
       if ( Math.abs(distance) < 0.1 || Math.abs(remainingDistance) > Math.abs(totalDistance) ) {
+        tossing = false;
         currentIndex = index - Math.round( delta.x / slideWidth );
         if (!options.snapToNearest && currentIndex > 0 && currentIndex < slides.length-slidesPerPage) {
           setCurrentLocationAfterToss();
@@ -540,7 +540,12 @@ function Swipe(container, options) {
     start: function(event) {
 
       var touches = event.touches[0];
-      stopToss = true;
+      if (tossing) {
+        stopToss = true;
+        if (!options.snapToNearest) {
+          setCurrentLocationAfterToss();
+        }
+      }
 
       // measure start values
       start = {
@@ -568,6 +573,8 @@ function Swipe(container, options) {
       element.addEventListener('touchmove', this, false);
       element.addEventListener('touchend', this, false);
       element.addEventListener('touchcancel', this, false);
+
+      event.preventDefault();
 
     },
     move: function(event) {
@@ -716,7 +723,6 @@ function Swipe(container, options) {
 
   // add event listeners
   if (browser.addEventListener) {
-    
     // set touchstart event on element    
     if (browser.touch) element.addEventListener('touchstart', events, false);
 
