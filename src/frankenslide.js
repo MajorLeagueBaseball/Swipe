@@ -1,7 +1,7 @@
 (function(factory) {
   //AMD
   if (typeof define === 'function' && define.amd) {
-    define(['jquery', './swipe.js', 'paperboy/paperboy'], factory);
+    define(['jquery', './swipe', 'paperboy/paperboy'], factory);
 
     //NODE
   } else if (typeof module === 'object' && module.exports) {
