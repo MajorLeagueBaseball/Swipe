@@ -766,6 +766,10 @@ function Swipe(container, options) {
       slide(to, speed);
 
     },
+    center: function(index, speed) {
+      var to = (index - (slidesPerPage / 2));
+      slide(to, speed);
+    },
     prev: function() {
 
       // cancel slideshow
