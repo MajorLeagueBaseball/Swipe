@@ -1,5 +1,5 @@
 {
-  "name": "Swipe",
+  "name": "frankenslide",
   "version": "2.0.0",
   "main": ["./frankenslide.js"],
   "author": "Brad Birdsall",

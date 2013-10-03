@@ -128,7 +128,7 @@ function Swipe(container, options) {
     width = getWidth( container );
     slideWidth = getWidth( slides[0] );
     var slideClientWidth = slides[0].clientWidth || slideWidth;
-    slidesPerPage = Math.floor( width / slideWidth );
+    slidesPerPage = Math.min( slides.length, Math.floor( width / slideWidth ) );
 
     element.style.width = (slides.length * slideWidth) + 'px';
 
